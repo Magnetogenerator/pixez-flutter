@@ -224,17 +224,17 @@ class _SettingQualityPageState extends State<SettingQualityPage>
                   title: Text(I18n.of(context).crosscount),
                   trailing: SettingSelectMenu(
                     index: userSetting.crossAdapt
-                        ? 3
-                        : userSetting.crossCount - 2,
-                    items: ['2', '3', '4', "Adapt"],
+                        ? 4
+                        : userSetting.crossCount - 1,
+                    items: ['1', '2', '3', '4', "Adapt"],
                     onChange: (index) async {
-                      if (index == 3) {
+                      if (index == 4) {
                         await userSetting.setCrossAdapt(true);
                         Leader.push(context, SettingCrossAdpaterPage(h: false));
                         return;
                       }
                       await userSetting.setCrossAdapt(false);
-                      await userSetting.setCrossCount(index + 2);
+                      await userSetting.setCrossCount(index + 1);
                       BotToast.showText(
                         text: I18n.of(context).need_to_restart_app,
                       );

@@ -283,11 +283,11 @@ class _SettingQualityPageState extends State<SettingQualityPage>
                   leading: Icon(FluentIcons.column),
                   trailing: Observer(
                     builder: (_) {
-                      const tablist = [' 2 ', ' 3 ', ' 4 ', "Adapt"];
+                      const tablist = [' 1 ', ' 2 ', ' 3 ', ' 4 ', "Adapt"];
                       return ComboBox<int>(
                         value: userSetting.crossAdapt
-                            ? 3
-                            : userSetting.crossCount - 2,
+                            ? 4
+                            : userSetting.crossCount - 1,
                         items: tablist
                             .asMap()
                             .entries
@@ -299,7 +299,7 @@ class _SettingQualityPageState extends State<SettingQualityPage>
                             )
                             .toList(),
                         onChanged: (index) async {
-                          if (index == 3) {
+                          if (index == 4) {
                             await userSetting.setCrossAdapt(true);
                             Leader.push(
                               context,
@@ -308,7 +308,7 @@ class _SettingQualityPageState extends State<SettingQualityPage>
                             return;
                           }
                           await userSetting.setCrossAdapt(false);
-                          await userSetting.setCrossCount(index! + 2);
+                          await userSetting.setCrossCount(index! + 1);
                           BotToast.showText(
                             text: I18n.of(context).need_to_restart_app,
                           );
