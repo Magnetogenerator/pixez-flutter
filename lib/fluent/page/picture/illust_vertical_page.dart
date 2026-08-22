@@ -52,7 +52,12 @@ class _IllustVerticalPageState extends IllustItemsPageState {
             builder: (_) => CustomScrollView(
               controller: scrollController,
               slivers: [
-                ...buildPhotoList(data, false, height),
+                ...buildPhotoList(
+                  data,
+                  constraints.maxWidth,
+                  height,
+                  fillRemaining: false,
+                ),
                 ...buildDetail(context, data)
               ],
             ),

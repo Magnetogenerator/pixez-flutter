@@ -65,7 +65,7 @@ val packageName = if (isGooglePlay) {
 android {
     namespace = "com.perol.pixez"
     compileSdk = 37
-    ndkVersion = "28.2.13676358"
+    ndkVersion = "30.0.15729638"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -120,9 +120,11 @@ android {
             applicationIdSuffix = ".debug"
         }
 
-        if (keystorePropertiesFile.exists()) {
-            getByName("release") {
-                signingConfig = signingConfigs.getByName("release")
+        getByName("release") {
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
             }
         }
     }

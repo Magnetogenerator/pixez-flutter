@@ -210,24 +210,38 @@ abstract class IllustItemsPageState extends State<IllustItemsPage>
     );
   }
 
-  List<Widget> buildPhotoList(Illusts data, bool centerType, double height) {
+  List<Widget> buildPhotoList(
+    Illusts data,
+    double viewportWidth,
+    double viewportHeight, {
+    bool fillRemaining = true,
+  }) {
     return [
       if (data.type == "ugoira")
-        SliverFillRemaining(
-          child: Center(
-            child: NullHero(
-              tag: widget.heroString,
-              child: UgoiraLoader(id: widget.id, illusts: data),
-            ),
-          ),
-        ),
+        fillRemaining
+            ? SliverFillRemaining(
+                child: Center(
+                  child: NullHero(
+                    tag: widget.heroString,
+                    child: UgoiraLoader(id: widget.id, illusts: data),
+                  ),
+                ),
+              )
+            : SliverToBoxAdapter(
+                child: NullHero(
+                  tag: widget.heroString,
+                  child: UgoiraLoader(id: widget.id, illusts: data),
+                ),
+              ),
       if (data.type != "ugoira")
         data.pageCount == 1
-            ? (centerType
-                  ? SliverFillRemaining(child: buildPicture(data, height))
+            ? (fillRemaining
+                  ? SliverFillRemaining(
+                      child: buildPicture(data, viewportWidth, viewportHeight),
+                    )
                   : SliverList(
                       delegate: SliverChildBuilderDelegate((context, index) {
-                        return buildPicture(data, height);
+                        return buildPicture(data, viewportWidth, viewportHeight);
                       }, childCount: 1),
                     ))
             : SliverList(
@@ -239,7 +253,12 @@ abstract class IllustItemsPageState extends State<IllustItemsPage>
                     index,
                     data,
                     widget,
-                    icon: buildIllustsItem(index, data, height),
+                    icon: buildIllustsItem(
+                      index,
+                      data,
+                      viewportWidth,
+                      viewportHeight,
+                    ),
                     onMultiSavePressed: () async {
                       await showMutiChoiceDialog(data, context);
                     },
@@ -250,7 +269,11 @@ abstract class IllustItemsPageState extends State<IllustItemsPage>
     ];
   }
 
-  Widget buildPicture(Illusts data, double height) {
+  Widget buildPicture(
+    Illusts data,
+    double viewportWidth,
+    double viewportHeight,
+  ) {
     return Center(
       child: Builder(
         builder: (BuildContext context) {
@@ -259,32 +282,38 @@ abstract class IllustItemsPageState extends State<IllustItemsPage>
             url = data.managaDetailUrl;
           }
 
-          return LayoutBuilder(
-            builder: (context, constraints) => IllustItem(
-              0,
-              data,
-              widget,
-              icon: NullHero(
-                tag: widget.heroString,
-                child: PixivImage(
-                  url,
-                  fade: false,
-                  width: constraints.maxWidth,
-                  height: height,
-                  placeWidget: (url != data.imageUrls.medium)
-                      ? PixivImage(
-                          data.imageUrls.medium,
-                          fade: false,
-                          width: constraints.maxWidth,
-                          height: height,
-                        )
-                      : null,
+          return Center(
+            child: SizedBox(
+              width: viewportWidth,
+              height: viewportHeight,
+              child: IllustItem(
+                0,
+                data,
+                widget,
+                icon: NullHero(
+                  tag: widget.heroString,
+                  child: PixivImage(
+                    url,
+                    fade: false,
+                    width: viewportWidth,
+                    height: viewportHeight,
+                    fit: BoxFit.contain,
+                    placeWidget: (url != data.imageUrls.medium)
+                        ? PixivImage(
+                            data.imageUrls.medium,
+                            fade: false,
+                            width: viewportWidth,
+                            height: viewportHeight,
+                            fit: BoxFit.contain,
+                          )
+                        : null,
+                  ),
                 ),
+                onMultiSavePressed: () async {
+                  await showMutiChoiceDialog(data, context);
+                },
+                save: _pressSave,
               ),
-              onMultiSavePressed: () async {
-                await showMutiChoiceDialog(data, context);
-              },
-              save: _pressSave,
             ),
           );
         },
@@ -314,36 +343,56 @@ abstract class IllustItemsPageState extends State<IllustItemsPage>
     );
   }
 
-  Widget buildIllustsItem(int index, Illusts illust, double height) {
+  Widget buildIllustsItem(
+    int index,
+    Illusts illust,
+    double viewportWidth,
+    double viewportHeight,
+  ) {
     if (illust.type == "manga") {
       String url = illust.managaDetailImageUrl(index);
       if (index == 0)
-        return LayoutBuilder(
-          builder: (context, constraints) => NullHero(
-            child: PixivImage(
-              url,
-              placeWidget: PixivImage(
-                illust.metaPages[index].imageUrls!.medium,
-                width: constraints.maxWidth,
+        return Center(
+          child: SizedBox(
+            width: viewportWidth,
+            height: viewportHeight,
+            child: NullHero(
+              child: PixivImage(
+                url,
+                placeWidget: PixivImage(
+                  illust.metaPages[index].imageUrls!.medium,
+                  width: viewportWidth,
+                  height: viewportHeight,
+                  fit: BoxFit.contain,
+                  fade: false,
+                ),
+                width: viewportWidth,
+                height: viewportHeight,
+                fit: BoxFit.contain,
                 fade: false,
               ),
-              width: constraints.maxWidth,
-              fade: false,
+              tag: widget.heroString,
             ),
-            tag: widget.heroString,
           ),
         );
-      return LayoutBuilder(
-        builder: (context, constraints) => PixivImage(
-          url,
-          fade: false,
-          width: constraints.maxWidth,
-          placeWidget: Container(
-            height: height,
-            child: Center(
-              child: Text(
-                '$index',
-                style: FluentTheme.of(context).typography.title,
+      return Center(
+        child: SizedBox(
+          width: viewportWidth,
+          height: viewportHeight,
+          child: PixivImage(
+            url,
+            fade: false,
+            width: viewportWidth,
+            height: viewportHeight,
+            fit: BoxFit.contain,
+            placeWidget: Container(
+              height: viewportHeight,
+              width: viewportWidth,
+              child: Center(
+                child: Text(
+                  '$index',
+                  style: FluentTheme.of(context).typography.title,
+                ),
               ),
             ),
           ),
@@ -352,33 +401,64 @@ abstract class IllustItemsPageState extends State<IllustItemsPage>
     }
     return index == 0
         ? (userSetting.pictureQuality >= 1
-              ? NullHero(
-                  child: PixivImage(
-                    illust.illustDetailImageUrl(index),
-                    placeWidget: PixivImage(
-                      illust.metaPages[index].imageUrls!.medium,
-                      fade: false,
+              ? Center(
+                  child: SizedBox(
+                    width: viewportWidth,
+                    height: viewportHeight,
+                    child: NullHero(
+                      child: PixivImage(
+                        illust.illustDetailImageUrl(index),
+                        placeWidget: PixivImage(
+                          illust.metaPages[index].imageUrls!.medium,
+                          width: viewportWidth,
+                          height: viewportHeight,
+                          fit: BoxFit.contain,
+                          fade: false,
+                        ),
+                        width: viewportWidth,
+                        height: viewportHeight,
+                        fit: BoxFit.contain,
+                        fade: false,
+                      ),
+                      tag: widget.heroString,
                     ),
-                    fade: false,
                   ),
-                  tag: widget.heroString,
                 )
-              : NullHero(
-                  child: PixivImage(
-                    illust.illustDetailImageUrl(index),
-                    fade: false,
+              : Center(
+                  child: SizedBox(
+                    width: viewportWidth,
+                    height: viewportHeight,
+                    child: NullHero(
+                      child: PixivImage(
+                        illust.metaPages[index].imageUrls!.medium,
+                        width: viewportWidth,
+                        height: viewportHeight,
+                        fit: BoxFit.contain,
+                        fade: false,
+                      ),
+                      tag: widget.heroString,
+                    ),
                   ),
-                  tag: widget.heroString,
                 ))
-        : PixivImage(
-            illust.illustDetailImageUrl(index),
-            fade: false,
-            placeWidget: Container(
-              height: 150,
-              child: Center(
-                child: Text(
-                  '$index',
-                  style: FluentTheme.of(context).typography.title,
+        : Center(
+            child: SizedBox(
+              width: viewportWidth,
+              height: viewportHeight,
+              child: PixivImage(
+                illust.illustDetailImageUrl(index),
+                fade: false,
+                width: viewportWidth,
+                height: viewportHeight,
+                fit: BoxFit.contain,
+                placeWidget: Container(
+                  height: viewportHeight > 150 ? 150 : viewportHeight,
+                  width: viewportWidth,
+                  child: Center(
+                    child: Text(
+                      '$index',
+                      style: FluentTheme.of(context).typography.title,
+                    ),
+                  ),
                 ),
               ),
             ),
