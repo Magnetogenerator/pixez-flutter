@@ -43,10 +43,7 @@ class _IllustRowPageState extends IllustItemsPageState {
     return LayoutBuilder(
       builder: (context, constraints) {
         final expectWidth = constraints.maxWidth - 300;
-        final radio = (data.height.toDouble() / data.width);
         final screenHeight = constraints.maxHeight;
-        final height = (radio * expectWidth);
-        final centerType = height <= screenHeight;
 
         return Container(
           child: Row(
@@ -54,7 +51,7 @@ class _IllustRowPageState extends IllustItemsPageState {
               Container(
                 width: expectWidth,
                 child: CustomScrollView(
-                    slivers: [...buildPhotoList(data, centerType, height)]),
+                    slivers: [...buildPhotoList(data, expectWidth, screenHeight)]),
               ),
               Expanded(
                 child: Container(

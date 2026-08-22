@@ -120,3 +120,7 @@ msic
 # FVM Version Cache
 .fvm/
 /lib/src/generated/
+
+# Agents related
+**/openspec/
+**/.agent/

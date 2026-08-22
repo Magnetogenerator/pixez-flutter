@@ -299,10 +299,7 @@ class _IllustRowPageState extends State<IllustRowPage>
       leftWidth = atLeastWidth;
       expectWidth = MediaQuery.of(context).size.width - leftWidth;
     }
-    final radio = (data.height.toDouble() / data.width);
     final screenHeight = MediaQuery.of(context).size.height;
-    final height = (radio * expectWidth);
-    final centerType = height <= screenHeight;
     if (userStore == null) userStore = UserStore(data.user.id, null, data.user);
     final dividerWidth = 28.0;
     return GestureDetector(
@@ -321,7 +318,11 @@ class _IllustRowPageState extends State<IllustRowPage>
                       width: expectWidth,
                       child: CustomScrollView(
                         slivers: [
-                          ..._buildPhotoList(data, centerType, height),
+                          ..._buildPhotoList(
+                            data,
+                            expectWidth,
+                            screenHeight,
+                          ),
                           SliverToBoxAdapter(
                             child: Container(
                               height: MediaQuery.of(context).padding.bottom,
@@ -422,7 +423,11 @@ class _IllustRowPageState extends State<IllustRowPage>
     );
   }
 
-  List<Widget> _buildPhotoList(Illusts data, bool centerType, double height) {
+  List<Widget> _buildPhotoList(
+    Illusts data,
+    double viewportWidth,
+    double viewportHeight,
+  ) {
     return [
       if (data.type == "ugoira")
         SliverToBoxAdapter(
@@ -433,13 +438,9 @@ class _IllustRowPageState extends State<IllustRowPage>
         ),
       if (data.type != "ugoira")
         data.pageCount == 1
-            ? (centerType
-                  ? SliverFillRemaining(child: _buildPicture(data, height))
-                  : SliverList(
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        return _buildPicture(data, height);
-                      }, childCount: 1),
-                    ))
+            ? SliverFillRemaining(
+                child: _buildPicture(data, viewportWidth, viewportHeight),
+              )
             : SliverList(
                 delegate: SliverChildBuilderDelegate((
                   BuildContext context,
@@ -459,14 +460,23 @@ class _IllustRowPageState extends State<IllustRowPage>
                         ),
                       );
                     },
-                    child: _buildIllustsItem(index, data, height),
+                    child: _buildIllustsItem(
+                      index,
+                      data,
+                      viewportWidth,
+                      viewportHeight,
+                    ),
                   );
                 }, childCount: data.metaPages.length),
               ),
     ];
   }
 
-  Widget _buildPicture(Illusts data, double height) {
+  Widget _buildPicture(
+    Illusts data,
+    double viewportWidth,
+    double viewportHeight,
+  ) {
     return Center(
       child: Builder(
         builder: (BuildContext context) {
@@ -474,7 +484,10 @@ class _IllustRowPageState extends State<IllustRowPage>
           if (data.type == "manga") {
             url = data.managaDetailUrl;
           }
-          Widget placeWidget = Container(height: height);
+          Widget placeWidget = Container(
+            height: viewportHeight,
+            width: viewportWidth,
+          );
           return InkWell(
             onLongPress: () {
               _pressSave(data, 0);
@@ -491,18 +504,26 @@ class _IllustRowPageState extends State<IllustRowPage>
             },
             child: NullHero(
               tag: widget.heroString,
-              child: PixivImage(
-                url,
-                fade: false,
-                width: MediaQuery.of(context).size.width,
-                placeWidget: (url != data.imageUrls.medium)
-                    ? PixivImage(
-                        data.imageUrls.medium,
-                        width: MediaQuery.of(context).size.width,
-                        placeWidget: placeWidget,
-                        fade: false,
-                      )
-                    : placeWidget,
+              child: SizedBox(
+                width: viewportWidth,
+                height: viewportHeight,
+                child: PixivImage(
+                  url,
+                  fade: false,
+                  width: viewportWidth,
+                  height: viewportHeight,
+                  fit: BoxFit.contain,
+                  placeWidget: (url != data.imageUrls.medium)
+                      ? PixivImage(
+                          data.imageUrls.medium,
+                          width: viewportWidth,
+                          height: viewportHeight,
+                          fit: BoxFit.contain,
+                          placeWidget: placeWidget,
+                          fade: false,
+                        )
+                      : placeWidget,
+                ),
               ),
             ),
           );
@@ -536,71 +557,100 @@ class _IllustRowPageState extends State<IllustRowPage>
     );
   }
 
-  Widget _buildIllustsItem(int index, Illusts illust, double height) {
+  Widget _buildIllustsItem(
+    int index,
+    Illusts illust,
+    double viewportWidth,
+    double viewportHeight,
+  ) {
+    Widget content;
     if (illust.type == "manga") {
       String url = illust.managaDetailImageUrl(index);
-      if (index == 0)
-        return NullHero(
+      if (index == 0) {
+        content = NullHero(
           child: PixivImage(
             url,
             placeWidget: PixivImage(
               illust.metaPages[index].imageUrls!.medium,
-              width: MediaQuery.of(context).size.width,
+              width: viewportWidth,
+              height: viewportHeight,
+              fit: BoxFit.contain,
               fade: false,
             ),
-            width: MediaQuery.of(context).size.width,
+            width: viewportWidth,
+            height: viewportHeight,
+            fit: BoxFit.contain,
             fade: false,
           ),
           tag: widget.heroString,
         );
-      return PixivImage(
-        url,
-        fade: false,
-        width: MediaQuery.of(context).size.width,
-        placeWidget: Container(
-          height: height,
-          child: Center(
-            child: Text(
-              '$index',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ),
-        ),
-      );
-    }
-    return index == 0
-        ? (userSetting.pictureQuality >= 1
-              ? NullHero(
-                  child: PixivImage(
-                    illust.illustDetailImageUrl(index),
-                    placeWidget: PixivImage(
-                      illust.metaPages[index].imageUrls!.medium,
-                      fade: false,
-                    ),
-                    fade: false,
-                  ),
-                  tag: widget.heroString,
-                )
-              : NullHero(
-                  child: PixivImage(
-                    illust.metaPages[index].imageUrls!.medium,
-                    fade: false,
-                  ),
-                  tag: widget.heroString,
-                ))
-        : PixivImage(
-            illust.illustDetailImageUrl(index),
-            fade: false,
-            placeWidget: Container(
-              height: 150,
-              child: Center(
-                child: Text(
-                  '$index',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
+      } else {
+        content = PixivImage(
+          url,
+          fade: false,
+          width: viewportWidth,
+          height: viewportHeight,
+          fit: BoxFit.contain,
+          placeWidget: Container(
+            height: viewportHeight,
+            width: viewportWidth,
+            child: Center(
+              child: Text(
+                '$index',
+                style: Theme.of(context).textTheme.headlineMedium,
               ),
             ),
-          );
+          ),
+        );
+      }
+    } else {
+      if (index == 0) {
+        content = NullHero(
+          child: PixivImage(
+            userSetting.pictureQuality >= 1
+                ? illust.illustDetailImageUrl(index)
+                : illust.metaPages[index].imageUrls!.medium,
+            placeWidget: PixivImage(
+              illust.metaPages[index].imageUrls!.medium,
+              width: viewportWidth,
+              height: viewportHeight,
+              fit: BoxFit.contain,
+              fade: false,
+            ),
+            width: viewportWidth,
+            height: viewportHeight,
+            fit: BoxFit.contain,
+            fade: false,
+          ),
+          tag: widget.heroString,
+        );
+      } else {
+        content = PixivImage(
+          illust.illustDetailImageUrl(index),
+          fade: false,
+          width: viewportWidth,
+          height: viewportHeight,
+          fit: BoxFit.contain,
+          placeWidget: Container(
+            height: viewportHeight > 150 ? 150 : viewportHeight,
+            width: viewportWidth,
+            child: Center(
+              child: Text(
+                '$index',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+            ),
+          ),
+        );
+      }
+    }
+    return Center(
+      child: SizedBox(
+        width: viewportWidth,
+        height: viewportHeight,
+        child: content,
+      ),
+    );
   }
 
   Future _longPressTag(BuildContext context, Tags f) async {
